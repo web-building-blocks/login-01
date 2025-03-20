@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -9,6 +11,8 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import Link from "next/link" // 导入 Link
+import { signIn } from "next-auth/react" // 导入 next-auth signIn
 
 export function LoginForm({
   className,
@@ -38,12 +42,13 @@ export function LoginForm({
               <div className="grid gap-3">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  <a
-                    href="#"
+                  {/* ✅ 修改跳转 Forgot Password */}
+                  <Link
+                    href="/forgot-password"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                   >
                     Forgot your password?
-                  </a>
+                  </Link>
                 </div>
                 <Input id="password" type="password" required />
               </div>
@@ -51,16 +56,30 @@ export function LoginForm({
                 <Button type="submit" className="w-full">
                   Login
                 </Button>
-                <Button variant="outline" className="w-full">
+                {/* ✅ 添加 Google 登录 */}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => signIn("google")}
+                >
                   Login with Google
                 </Button>
+                {/* 添加 GitHub 登录
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => signIn("github")}
+                >
+                  Login with GitHub
+                </Button> */}
               </div>
             </div>
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
-              <a href="#" className="underline underline-offset-4">
+              {/* ✅ 修改跳转 Sign Up */}
+              <Link href="/signup" className="underline underline-offset-4">
                 Sign up
-              </a>
+              </Link>
             </div>
           </form>
         </CardContent>
