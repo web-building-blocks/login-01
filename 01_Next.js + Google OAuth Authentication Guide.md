@@ -88,7 +88,7 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 
 Create an API endpoint in `app/api/auth/[...nextauth]/route.ts`:
 
-<CodeBlock language="tsx">
+```tsx
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
@@ -108,7 +108,7 @@ export const authOptions = {
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
-</CodeBlock>
+```
 
 ### Add to `.env.local`
 
