@@ -9,68 +9,56 @@ export default function DashboardPage() {
   const router = useRouter();
   const [userEmail, setUserEmail] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const fetchSupabaseUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
 
-      if (user?.email) {
-        setUserEmail(user.email);
-      } else {
-        router.replace("/login"); // ✅ 如果未登录，跳转到 login
-      }
-      setIsLoading(false);
-    };
+      const token = data?.session?.access_token;
+      const email = data?.session?.user?.email;
 
-    const fetchLocalUser = async () => {
-      const token = localStorage.getItem("access_token");
-      if (!token) {
-        router.replace("/login"); // ✅ 本地没有 token 也跳转
-        return false;
+      if (token && email) {
+        localStorage.setItem("access_token", token);
+        setUserEmail(email);
+        setIsAuthenticated(true);
+        setIsLoading(false);
+        return;
       }
 
-      try {
-        const res = await fetch("http://localhost:5000/auth/user", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await res.json();
-        if (data.email) {
-          setUserEmail(data.email);
-          setIsLoading(false);
-          return true;
-        } else {
-          router.replace("/login"); // ✅ Token 失效，跳转
+      // fallback: Check local token (compatible with old login)
+      const stored = localStorage.getItem("access_token");
+      if (stored) {
+        try {
+          const res = await fetch("http://localhost:5000/auth/user", {
+            headers: {
+              Authorization: `Bearer ${stored}`,
+            },
+          });
+          const json = await res.json();
+          if (json.email) {
+            setUserEmail(json.email);
+            setIsAuthenticated(true);
+            setIsLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.error("Token expired or invalid", err);
         }
-      } catch (err) {
-        console.error("Local auth error:", err);
-        router.replace("/login"); // ✅ 发生错误也跳转
       }
 
-      return false;
+      router.replace("/login");
     };
 
-    fetchLocalUser().then(async (ok) => {
-      if (!ok) {
-        await fetchSupabaseUser();
-      }
-    });
+    checkSession();
   }, [router]);
+
+  if (isLoading) return <div className="text-center mt-10">Loading...</div>;
+  if (!isAuthenticated) return null;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-      <h1 className="text-2xl font-bold">
-        {isLoading
-          ? "Loading..."
-          : userEmail
-          ? `Welcome, ${userEmail}!`
-          : "Not logged in"}
-      </h1>
-
-      {/* ✅ 添加 Logout 按钮 */}
+      <h1 className="text-2xl font-bold">Welcome, {userEmail}!</h1>
       <LogoutButton />
     </div>
   );
