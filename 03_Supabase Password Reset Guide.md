@@ -43,7 +43,7 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
 
 ---
 
-## 🖥️ Step 3: Frontend - Send Password Reset Request
+## 💽 Step 3: Frontend - Send Password Reset Request
 
 In your `ForgotPasswordForm.tsx`:
 
@@ -123,9 +123,43 @@ export default function UpdatePasswordPage() {
 
 ---
 
+## ✨ Step 5: Configure GitHub Actions Environment Variables
+
+To securely use Supabase environment variables in your GitHub Actions:
+
+### 📍 Step 1: Go to Secrets
+1. Open your repository: `https://github.com/your-username/your-repo`
+2. Go to `Settings`
+3. In the left sidebar, click `Secrets and variables > Actions`
+4. Click `New repository secret`
+
+### ➕ Step 2: Add the following secrets
+
+- **Name:** `NEXT_PUBLIC_SUPABASE_URL`
+  - **Value:** `https://lhyuiixwhyojeefnxaeu.supabase.co`
+
+- **Name:** `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - **Value:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxoeXVpaXh3aHlvamVlZm54YWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMwMzA0NDIsImV4cCI6MjA1ODYwNjQ0Mn0.Rn0LHb0AbHzthslwogid6ngq1gbIKV_InFJoK7PoV5g`
+
+### 🔧 Step 3: Use them in workflow
+
+In your `.github/workflows/frontend.yml`:
+
+```yaml
+- name: Build app
+  env:
+    NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+  run: pnpm build
+```
+
+This ensures secrets are injected securely into your CI without being exposed ✅
+
+---
+
 ## ✅ Final Test Flow
 
 1. Go to `forgot-password` page and submit your email.
 2. Click the link received by email (redirects to `/update-password`).
-3. Set a new password → you’ll be redirected to login.
+3. Set a new password → you'll be redirected to login.
 4. Login using the new password.
