@@ -29,10 +29,11 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
-  const [showVerifyDialog, setShowVerifyDialog] = useState(false); // ✅ 新增弹窗状态
-  const [errorMessage, setErrorMessage] = useState("");  
+  const [showVerifyDialog, setShowVerifyDialog] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,11 +47,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
 
     if (!res.ok) {
       if (data.error === "Please verify your email before logging in.") {
-        setShowVerifyDialog(true); // ✅ 触发邮箱未验证弹窗
-      } else if (data.error === "Email is already registered") {
-        // 如果注册邮箱已存在，显示错误弹窗
-        setErrorMessage("This email is already registered. Please log in.");
-        setShowErrorDialog(true);
+        setShowVerifyDialog(true);
       } else {
         setErrorMessage(data.error || "Login failed");
         setShowErrorDialog(true);
@@ -58,7 +55,25 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
       return;
     }
 
-    localStorage.setItem("access_token", data.access_token);
+    const { access_token, refresh_token } = data;
+
+    if (rememberMe) {
+      localStorage.setItem("access_token", access_token);
+      localStorage.setItem("refresh_token", refresh_token);
+    } else {
+      sessionStorage.setItem("access_token", access_token);
+      sessionStorage.setItem("refresh_token", refresh_token);
+    }
+
+    // ✅ 设置 Supabase 会话（必须带 refresh_token）
+    await supabase.auth.setSession({
+      access_token,
+      refresh_token,
+    });
+
+    // ✅ 设置防重复标志，避免刷新页面后再次调用 setSession 报错
+    sessionStorage.setItem("sessionRestored", "true");
+
     setShowSuccessDialog(true);
   };
 
@@ -112,6 +127,17 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                     required
                   />
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="rememberMe"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
+                  <Label htmlFor="rememberMe">Remember Me</Label>
+                </div>
+
                 <div className="flex flex-col gap-3">
                   <Button type="submit" className="w-full">
                     Login
@@ -139,7 +165,6 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
         </Card>
       </div>
 
-      {/* ✅ 成功弹窗 */}
       <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -153,7 +178,6 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ✅ 未验证邮箱弹窗 */}
       <AlertDialog open={showVerifyDialog} onOpenChange={setShowVerifyDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -168,7 +192,6 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ✅ 错误弹窗 */}
       <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>

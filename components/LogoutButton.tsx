@@ -9,8 +9,13 @@ export function LogoutButton() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+
     localStorage.removeItem("access_token");
-    router.replace("/login"); // not push
+    localStorage.removeItem("refresh_token");
+    sessionStorage.removeItem("access_token");
+    sessionStorage.removeItem("refresh_token");
+
+    router.replace("/login");
   };
 
   return (
